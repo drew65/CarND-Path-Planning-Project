@@ -1,6 +1,45 @@
 # CarND-Path-Planning-Project
 Self-Driving Car Engineer Nanodegree Program
-   
+
+## Project Specification
+### Criteria
+#### Compilation
+The code compiles correctly.
+
+The set sources line in `CMakeLists.txt` has been modified to include two new code files:
+* `finite_state_machine.cpp` that contains the bulk of the code to choose and build a new trajectory for each simulator cycle.
+* `helper_functions.cpp` that contains all the generic helper functions including those in the original `main.cpp`.
+
+This is the modification `set(sources src/main.cpp src/finite_state_machine.cpp src/helper_functions.cpp)`
+#### Valid Trajectories
+* The car is able to drive at least 4.32 miles without incident. It has driven without incident for over 30 minutes maintaining a velocity just under the speed limit.
+* The car drives according to the speed limit.
+* Max Acceleration and Jerk are not Exceeded.
+* Car does not have collisions.
+* The car stays in its lane, except for the time between changing lanes.
+* The car is able to change lanes.
+
+#### Reflection
+##### First strategy
+The initial strategy was first to hard-code the finite state machine logic that determined the appropriate action to take each cycle with regards to speed and lane change. So as to produce the optimum trajectory (one that meets the valid trajectory criteria).  Based on a state change map, acceleration & breaking and lane change strategies were implemented that maintained the speed limit and avoided collision.  
+A finite state machine class FSM was used  with the variables and methods given in `finite_state_machine.cpp` and  `finite_state_machine.h`.
+
+The results were reasonable but every exception needed to be coded for.  This strategy is limiting because it will not necessarily transfer to another road setting as it is optimized for the current simulator using a predefined finite state machine map that can not be modified without significant changes to the code.  
+
+##### Second strategy
+The second and final strategy was to implement cost functions for controlling the car speed and lane change activity independently.  First a FSM class instance is created as in the initial strategy (above). In each cycle of the simulator  a  `finite_state_machine2()` method is called which calls `get_near_cars()` to determine the trajectories of the other cars on the highway, based on the sensor data from the simulator.  
+
+Next it determines the new  velocity to be used when creating the new trajectory by calling methods that give a cost to each possible speed outcome (here we use three: `keep_speed_cost()`, `speed_up_cost()`, `slow_down_cost()`). The action associated with the best cost is then executed it either increments, decrements, or keeps the current velocity.
+
+Next it determines the new  lane to be used when creating the new trajectory by calling methods that give a cost to each possible lane change outcome (here we use three: `stay_in_lane_cost()`, `left_lane_change_cost()`, `right_lane_change_cost()`). The action associated with the best cost is then executed, it either changes lane right, changes lane left, or keeps the current lane.
+
+Execution returns to `main()` and the FSM method  `plan_trajectory2()` (This method is used to maintain comparability with the first strategy implemented see above) is called which in-turn calls `lane_travel_spline3()` to calculate the new trajectory that is required by the next cycle of the simulator. This trajectory is calculated based on the new ref_velocity, new lane, and the remaining points from the previous trajectory (after movement) which was returned from the simulator.
+The code is based on the trajectory planner detailed in the project walk-through section of the lesson, it uses a spline function to calculate the trajectory.
+
+This new trajectory is sent to the simulator and the cycles continue.
+
+----------------------------------------------------------------------------------------
+
 ### Simulator.
 You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases).
 
@@ -38,13 +77,13 @@ Here is the data provided from the Simulator to the C++ Program
 #### Previous path data given to the Planner
 
 //Note: Return the previous list but with processed points removed, can be a nice tool to show how far along
-the path has processed since last time. 
+the path has processed since last time.
 
 ["previous_path_x"] The previous list of x points previously given to the simulator
 
 ["previous_path_y"] The previous list of y points previously given to the simulator
 
-#### Previous path's end s and d values 
+#### Previous path's end s and d values
 
 ["end_path_s"] The previous list's last point's frenet s value
 
@@ -52,7 +91,7 @@ the path has processed since last time.
 
 #### Sensor Fusion Data, a list of all other car's attributes on the same side of the road. (No Noise)
 
-["sensor_fusion"] A 2d vector of cars and then that car's [car's unique ID, car's x position in map coordinates, car's y position in map coordinates, car's x velocity in m/s, car's y velocity in m/s, car's s position in frenet coordinates, car's d position in frenet coordinates. 
+["sensor_fusion"] A 2d vector of cars and then that car's [car's unique ID, car's x position in map coordinates, car's y position in map coordinates, car's x velocity in m/s, car's y velocity in m/s, car's s position in frenet coordinates, car's d position in frenet coordinates.
 
 ## Details
 
@@ -82,7 +121,7 @@ A really helpful resource for doing this project and creating smooth trajectorie
   * Run either `install-mac.sh` or `install-ubuntu.sh`.
   * If you install from source, checkout to commit `e94b6e1`, i.e.
     ```
-    git clone https://github.com/uWebSockets/uWebSockets 
+    git clone https://github.com/uWebSockets/uWebSockets
     cd uWebSockets
     git checkout e94b6e1
     ```
@@ -137,4 +176,3 @@ still be compilable with cmake and make./
 
 ## How to write a README
 A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
-
